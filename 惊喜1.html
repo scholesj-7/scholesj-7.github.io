@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>曼宝抽奖轮盘</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: #0c0c1a;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff9a9e, #a1c4fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .description {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            background: #1a1a2e;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .pointer-container {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+        }
+        
+        .pointer {
+            width: 40px;
+            height: 60px;
+            background: linear-gradient(to bottom, #ff416c, #ff4b2b);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ff9a9e, #ff4b2b);
+            border-radius: 50%;
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .center-circle:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .spin-btn, .toggle-btn, .history-btn {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .toggle-btn {
+            background: linear-gradient(135deg, #4A00E0, #8E2DE2);
+        }
+        
+        .history-btn {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+        }
+        
+        .spin-btn:hover, .toggle-btn:hover, .history-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .spin-btn:active, .toggle-btn:active, .history-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .spin-btn.stop {
+            background: linear-gradient(135deg, #ff4b2b, #ff416c);
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            text-align: center;
+            font-size: 18px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .history-section {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .history-title {
+            font-size: 1.5rem;
+            background: linear-gradient(45deg, #ff9a9e, #a1c4fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .history-item i {
+            font-size: 24px;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .history-item-content {
+            flex: 1;
+        }
+        
+        .history-item-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .history-item-description {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .history-item-time {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        
+        .settings {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .settings label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff9a9e, #a1c4fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .modal-prize {
+            font-size: 24px;
+            margin: 15px 0;
+            color: #FFEB3B;
+            font-weight: bold;
+        }
+        
+        .modal-icon {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-icon i {
+            font-size: 40px;
+            background: linear-gradient(45deg, #ff9a9e, #a1c4fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .modal-description {
+            font-size: 18px;
+            margin: 15px 0;
+            color: white;
+            line-height: 1.4;
+        }
+        
+        .modal-close {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 auto;
+        }
+        
+        .modal-close:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 500px) {
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .center-circle {
+                width: 60px;
+                height: 60px;
+                font-size: 14px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-gift"></i> 曼宝抽奖轮盘</h1>
+            <p class="description">点击开始按钮转动轮盘，再次点击停止！每个扇区都有独特的奖励！</p>
+        </div>
+        
+        <div class="wheel-container">
+            <div class="wheel" id="wheel"></div>
+            
+            <div class="pointer-container">
+                <div class="pointer"></div>
+            </div>
+            
+            <div class="center-circle" id="center-circle">
+                <i class="fas fa-play"></i>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="spin-btn" id="spin-btn">
+                <i class="fas fa-play"></i> 开始转动
+            </button>
+            <button class="history-btn" id="history-btn">
+                <i class="fas fa-history"></i> 显示历史
+            </button>
+        </div>
+        
+        <div class="settings">
+            <label>
+                <input type="checkbox" id="allow-duplicates">
+                允许重复中奖
+            </label>
+        </div>
+        
+        <div class="result" id="result">
+            <i class="fas fa-star"></i> 点击开始按钮转动轮盘 <i class="fas fa-star"></i>
+        </div>
+        
+        <div class="history-section" id="history-section" style="display: none;">
+            <div class="history-header">
+                <div class="history-title">中奖历史记录</div>
+                <button class="toggle-btn" id="hide-history-btn">
+                    <i class="fas fa-times"></i> 隐藏
+                </button>
+            </div>
+            <div class="history-list" id="history-list"></div>
+        </div>
+    </div>
+
+    <!-- 弹窗 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">恭喜曼宝中奖！</div>
+            <div class="modal-prize" id="modal-prize"></div>
+            <div class="modal-icon">
+                <i id="modal-icon"></i>
+            </div>
+            <div class="modal-description" id="modal-description"></div>
+            <button class="modal-close" id="modal-close">
+                <i class="fas fa-check"></i> 确认领取
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const wheel = document.getElementById('wheel');
+            const spinBtn = document.getElementById('spin-btn');
+            const centerCircle = document.getElementById('center-circle');
+            const resultDiv = document.getElementById('result');
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalPrize = document.getElementById('modal-prize');
+            const modalIcon = document.getElementById('modal-icon');
+            const modalDescription = document.getElementById('modal-description');
+            const modalClose = document.getElementById('modal-close');
+            const historyBtn = document.getElementById('history-btn');
+            const historySection = document.getElementById('history-section');
+            const hideHistoryBtn = document.getElementById('hide-history-btn');
+            const historyList = document.getElementById('history-list');
+            const allowDuplicatesCheckbox = document.getElementById('allow-duplicates');
+            
+            let isSpinning = false;
+            let rotation = 0;
+            let currentSpeed = 0;
+            let isStopping = false;
+            let history = [];
+            let availablePrizes = [...Array(10).keys()]; // 初始所有奖品都可用
+
+            // 预设奖品数据 - 每个扇区都有不同的颜色
+            const prizes = [
+                { 
+                    text: "特等奖", 
+                    color: "#FF6B6B", // 红色
+                    icon: "fas fa-gem", // 宝石图标
+                    description: "自选一个礼物"
+                },
+                { 
+                    text: "一等奖", 
+                    color: "#4ECDC4", // 青色
+                    icon: "fas fa-spa", // 护肤品图标
+                    description: "护肤品一套"
+                },
+                { 
+                    text: "二等奖", 
+                    color: "#FFD166", // 黄色
+                    icon: "fas fa-paint-brush", // 化妆刷图标
+                    description: "口红一个"
+                },
+                { 
+                    text: "三等奖", 
+                    color: "#06D6A0", // 绿色
+                    icon: "fas fa-wind", // 香水图标
+                    description: "香水一瓶"
+                },
+                { 
+                    text: "四等奖", 
+                    color: "#118AB2", // 蓝色
+                    icon: "fas fa-box", // 盲盒图标
+                    description: "盲盒一个"
+                },
+                { 
+                    text: "五等奖", 
+                    color: "#EF476F", // 粉色
+                    icon: "fas fa-feather-alt", // 改为羽毛图标，更优雅的花朵替代
+                    description: "花一束"
+                },
+                { 
+                    text: "六等奖", 
+                    color: "#7209B7", // 紫色
+                    icon: "fas fa-images", // 相框图标
+                    description: "定制相框一个"
+                },
+                { 
+                    text: "七等奖", 
+                    color: "#83C5BE", // 浅青色
+                    icon: "fas fa-film", // 电影图标
+                    description: "电影票一张"
+                },
+                { 
+                    text: "八等奖", 
+                    color: "#E63946", // 深红色
+                    icon: "fas fa-kiss-wink-heart", // 亲吻图标
+                    description: "吻一个"
+                },
+                { 
+                    text: "参与奖", 
+                    color: "#A8DADC", // 浅蓝色
+                    icon: "fas fa-gift", // 礼物图标
+                    description: "小礼品一份"
+                }
+            ];
+            
+            // 初始化轮盘
+            renderWheel();
+            
+            // 开始/停止旋转
+            spinBtn.addEventListener('click', toggleSpin);
+            centerCircle.addEventListener('click', toggleSpin);
+            
+            // 切换历史记录显示/隐藏
+            historyBtn.addEventListener('click', function() {
+                historySection.style.display = 'block';
+                renderHistory();
+            });
+            
+            hideHistoryBtn.addEventListener('click', function() {
+                historySection.style.display = 'none';
+            });
+            
+            // 切换旋转状态
+            function toggleSpin() {
+                if (!isSpinning) {
+                    startSpin();
+                } else {
+                    stopSpin();
+                }
+            }
+            
+            // 开始旋转
+            function startSpin() {
+                if (isSpinning) return;
+                
+                // 检查是否还有奖品可抽
+                if (availablePrizes.length === 0) {
+                    resultDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 所有奖品已抽完！';
+                    return;
+                }
+                
+                isSpinning = true;
+                isStopping = false;
+                spinBtn.innerHTML = '<i class="fas fa-stop"></i> 停止转动';
+                spinBtn.classList.add('stop');
+                resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 轮盘转动中...';
+                
+                currentSpeed = 10;
+                animateSpin();
+            }
+            
+            // 停止旋转
+            function stopSpin() {
+                if (!isSpinning || isStopping) return;
+                
+                isStopping = true;
+                spinBtn.disabled = true;
+                resultDiv.innerHTML = '<i class="fas fa-spinner"></i> 即将停止...';
+                
+                // 减速动画
+                const slowDown = setInterval(() => {
+                    currentSpeed *= 0.9;
+                    if (currentSpeed < 0.5) {
+                        clearInterval(slowDown);
+                        completeSpin();
+                    }
+                }, 100);
+            }
+            
+            // 旋转动画
+            function animateSpin() {
+                rotation += currentSpeed;
+                wheel.style.transform = `rotate(${rotation}deg)`;
+                
+                if (isSpinning && !isStopping) {
+                    requestAnimationFrame(animateSpin);
+                }
+            }
+            
+            // 完成旋转
+            function completeSpin() {
+                isSpinning = false;
+                isStopping = false;
+                spinBtn.disabled = false;
+                spinBtn.innerHTML = '<i class="fas fa-play"></i> 开始转动';
+                spinBtn.classList.remove('stop');
+                
+                // 计算中奖结果
+                const sectionAngle = 360 / prizes.length;
+                const normalizedRotation = rotation % 360;
+                let winningIndex = Math.floor((360 - normalizedRotation) / sectionAngle) % prizes.length;
+                
+                // 如果不允许重复中奖，则从可用奖品中随机选择一个
+                if (!allowDuplicatesCheckbox.checked && availablePrizes.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availablePrizes.length);
+                    winningIndex = availablePrizes[randomIndex];
+                    
+                    // 从可用奖品中移除已中奖的
+                    availablePrizes = availablePrizes.filter(index => index !== winningIndex);
+                }
+                
+                const prize = prizes[winningIndex];
+                
+                // 添加到历史记录
+                addToHistory(prize);
+                
+                // 显示弹窗
+                showModal(prize);
+                
+                // 更新结果区域
+                resultDiv.innerHTML = `<i class="fas fa-trophy"></i> 恭喜获得：${prize.text}`;
+            }
+            
+            // 添加到历史记录
+            function addToHistory(prize) {
+                const now = new Date();
+                const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                
+                history.unshift({
+                    prize: prize,
+                    time: timeString
+                });
+                
+                // 限制历史记录数量
+                if (history.length > 10) {
+                    history.pop();
+                }
+            }
+            
+            // 渲染历史记录
+            function renderHistory() {
+                historyList.innerHTML = '';
+                
+                if (history.length === 0) {
+                    historyList.innerHTML = '<div style="text-align: center; padding: 20px; opacity: 0.7;">暂无中奖记录</div>';
+                    return;
+                }
+                
+                history.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.innerHTML = `
+                        <i class="${item.prize.icon}"></i>
+                        <div class="history-item-content">
+                            <div class="history-item-title">${item.prize.text}</div>
+                            <div class="history-item-description">${item.prize.description}</div>
+                        </div>
+                        <div class="history-item-time">${item.time}</div>
+                    `;
+                    historyList.appendChild(historyItem);
+                });
+            }
+            
+            // 显示弹窗
+            function showModal(prize) {
+                modalPrize.textContent = prize.text;
+                modalIcon.className = prize.icon;
+                modalDescription.textContent = prize.description;
+                modalOverlay.classList.add('active');
+            }
+            
+            // 关闭弹窗
+            modalClose.addEventListener('click', function() {
+                modalOverlay.classList.remove('active');
+            });
+            
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    modalOverlay.classList.remove('active');
+                }
+            });
+            
+            // 渲染轮盘
+            function renderWheel() {
+                wheel.innerHTML = '';
+                
+                const sectionAngle = 360 / prizes.length;
+                
+                prizes.forEach((prize, index) => {
+                    const sectionElement = document.createElement('div');
+                    sectionElement.className = 'wheel-section';
+                    sectionElement.style.backgroundColor = prize.color;
+                    sectionElement.style.transform = `rotate(${index * sectionAngle}deg)`;
+                    
+                    wheel.appendChild(sectionElement);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
